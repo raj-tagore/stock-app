@@ -15,8 +15,8 @@ def create_tables():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS stock (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            book_name TEXT NOT NULL UNIQUE,
-            course_code TEXT,
+            course_code TEXT NOT NULL UNIQUE,
+            title TEXT,
             language TEXT,
             quantity INTEGER NOT NULL DEFAULT 0
         )
@@ -26,12 +26,12 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS transaction_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             stock_id INTEGER NOT NULL,
-            person_id TEXT,
+            enrolment_no TEXT,
             action TEXT NOT NULL CHECK (action IN ('in', 'out')),
             quantity INTEGER NOT NULL,
             transaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             name TEXT,
-            student_no TEXT,
+            remarks TEXT,
             phone TEXT,
             FOREIGN KEY (stock_id) REFERENCES stock (id)
         )
@@ -42,19 +42,19 @@ def create_tables():
 
 # --- Stock Functions ---
 
-def add_stock(book_name, course_code, language, quantity):
+def add_stock(course_code, title, language, quantity):
     """Adds a new stock item to the database."""
     conn = connect_db()
     cursor = conn.cursor()
     try:
         cursor.execute('''
-            INSERT INTO stock (book_name, course_code, language, quantity)
+            INSERT INTO stock (course_code, title, language, quantity)
             VALUES (?, ?, ?, ?)
-        ''', (book_name, course_code, language, int(quantity)))
+        ''', (course_code, title, language, int(quantity)))
         conn.commit()
         return True, "Stock added successfully."
     except sqlite3.IntegrityError:
-        return False, f"Book '{book_name}' already exists."
+        return False, f"Book '{course_code}' already exists."
     except Exception as e:
         return False, f"Error adding stock: {e}"
     finally:
@@ -64,7 +64,7 @@ def get_all_stock(filters=None):
     """Retrieves all stock items, optionally applying filters."""
     conn = connect_db()
     cursor = conn.cursor()
-    query = "SELECT id, book_name, course_code, language, quantity FROM stock"
+    query = "SELECT id, course_code, title, language, quantity FROM stock"
     params = []
     if filters:
         conditions = []
@@ -72,8 +72,8 @@ def get_all_stock(filters=None):
             if val:
                 # Adjust column names for query if necessary
                 db_col = col
-                if col == "book_name": db_col = "book_name" # Example, ensure mapping if GUI names differ
-                elif col == "course_code": db_col = "course_code"
+                if col == "course_code": db_col = "course_code" # Example, ensure mapping if GUI names differ
+                elif col == "title": db_col = "title"
                 elif col == "language": db_col = "language"
                 else: continue # Skip unknown filter keys
 
@@ -81,7 +81,7 @@ def get_all_stock(filters=None):
                 params.append(f"%{val}%")
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY book_name"
+    query += " ORDER BY course_code"
     cursor.execute(query, params)
     stock_items = cursor.fetchall()
     conn.close()
@@ -91,36 +91,36 @@ def get_stock_by_id(stock_id):
     """Retrieves a specific stock item by its ID."""
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, book_name, course_code, language, quantity FROM stock WHERE id = ?", (stock_id,))
+    cursor.execute("SELECT id, course_code, title, language, quantity FROM stock WHERE id = ?", (stock_id,))
     stock_item = cursor.fetchone()
     conn.close()
     return stock_item
 
-def get_stock_by_name(book_name):
+def get_stock_by_name(course_code):
     """Retrieves a specific stock item by its name."""
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, book_name, course_code, language, quantity FROM stock WHERE book_name = ?", (book_name,))
+    cursor.execute("SELECT id, course_code, title, language, quantity FROM stock WHERE course_code = ?", (course_code,))
     stock_item = cursor.fetchone()
     conn.close()
     return stock_item
 
-def update_stock(stock_id, book_name, course_code, language, quantity):
+def update_stock(stock_id, course_code, title, language, quantity):
     """Updates an existing stock item."""
     conn = connect_db()
     cursor = conn.cursor()
     try:
         cursor.execute('''
             UPDATE stock
-            SET book_name = ?, course_code = ?, language = ?, quantity = ?
+            SET course_code = ?, title = ?, language = ?, quantity = ?
             WHERE id = ?
-        ''', (book_name, course_code, language, int(quantity), stock_id))
+        ''', (course_code, title, language, int(quantity), stock_id))
         conn.commit()
         if cursor.rowcount == 0:
             return False, "Stock item not found or no changes made."
         return True, "Stock updated successfully."
     except sqlite3.IntegrityError:
-        return False, f"Book name '{book_name}' might already exist for another item."
+        return False, f"Course Code '{course_code}' might already exist for another item."
     except Exception as e:
         return False, f"Error updating stock: {e}"
     finally:
@@ -167,7 +167,7 @@ def _adjust_stock_quantity(cursor, stock_id, quantity_delta):
 
 # --- Transaction Functions ---
 
-def add_transaction(stock_id, person_id, action, quantity, name, student_no, phone):
+def add_transaction(stock_id, enrolment_no, action, quantity, name, remarks, phone):
     """Adds a new transaction and updates stock quantity."""
     conn = connect_db()
     cursor = conn.cursor()
@@ -190,9 +190,9 @@ def add_transaction(stock_id, person_id, action, quantity, name, student_no, pho
 
         # Record the transaction
         cursor.execute('''
-            INSERT INTO transaction_log (stock_id, person_id, action, quantity, transaction_time, name, student_no, phone)
+            INSERT INTO transaction_log (stock_id, enrolment_no, action, quantity, transaction_time, name, remarks, phone)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (stock_id, person_id, action, quantity, datetime.now(), name, student_no, phone))
+        ''', (stock_id, enrolment_no, action, quantity, datetime.now(), name, remarks, phone))
         
         conn.commit()
         return True, "Transaction added successfully and stock updated."
@@ -206,19 +206,19 @@ def add_transaction(stock_id, person_id, action, quantity, name, student_no, pho
         conn.close()
 
 def get_all_transactions(filters=None):
-    """Retrieves all transactions, joined with stock to show book_name."""
+    """Retrieves all transactions, joined with stock to show course_code."""
     conn = connect_db()
     cursor = conn.cursor()
     query = """
         SELECT 
             t.id, 
-            s.book_name, 
-            t.person_id, 
+            s.course_code, 
+            t.enrolment_no, 
             t.action, 
             t.quantity, 
             STRFTIME('%Y-%m-%d %H:%M:%S', t.transaction_time), 
             t.name, 
-            t.student_no, 
+            t.remarks, 
             t.phone,
             t.stock_id  -- Keep for internal use if needed (e.g. for delete)
         FROM transaction_log t
@@ -227,15 +227,15 @@ def get_all_transactions(filters=None):
     params = []
     if filters:
         conditions = []
-        # Supported filters: book_name, person_id, action, name, student_no, phone
+        # Supported filters: course_code, enrolment_no, action, name, remarks, phone
         for key, val in filters.items():
             if val:
                 db_col = None
-                if key == "book_name": db_col = "s.book_name"
-                elif key == "person_id": db_col = "t.person_id"
+                if key == "course_code": db_col = "s.course_code"
+                elif key == "enrolment_no": db_col = "t.enrolment_no"
                 elif key == "action": db_col = "t.action" # Exact match might be better for 'action'
                 elif key == "name": db_col = "t.name"
-                elif key == "student_no": db_col = "t.student_no"
+                elif key == "remarks": db_col = "t.remarks"
                 elif key == "phone": db_col = "t.phone"
                 
                 if db_col:
@@ -255,18 +255,18 @@ def get_all_transactions(filters=None):
     return transactions
 
 def get_transaction_by_id(transaction_id):
-    """Retrieves a specific transaction by its ID, with book_name."""
+    """Retrieves a specific transaction by its ID, with course_code."""
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT 
-            t.id, t.stock_id, s.book_name, t.person_id, t.action, t.quantity, 
-            STRFTIME('%Y-%m-%d %H:%M:%S', t.transaction_time), t.name, t.student_no, t.phone
+            t.id, t.stock_id, s.course_code, t.enrolment_no, t.action, t.quantity, 
+            STRFTIME('%Y-%m-%d %H:%M:%S', t.transaction_time), t.name, t.remarks, t.phone
         FROM transaction_log t
         JOIN stock s ON t.stock_id = s.id
         WHERE t.id = ?
     """, (transaction_id,))
-    transaction = cursor.fetchone() # Returns (trans_id, stock_id, book_name, ...)
+    transaction = cursor.fetchone() # Returns (trans_id, stock_id, course_code, ...)
     conn.close()
     return transaction
 
@@ -306,16 +306,16 @@ def delete_transaction(transaction_id):
     finally:
         conn.close()
 
-def update_transaction_details(transaction_id, person_id, name, student_no, phone):
-    """Updates non-critical details of a transaction (person_id, name, student_no, phone)."""
+def update_transaction_details(transaction_id, enrolment_no, name, remarks, phone):
+    """Updates non-critical details of a transaction (enrolment_no, name, remarks, phone)."""
     conn = connect_db()
     cursor = conn.cursor()
     try:
         cursor.execute('''
             UPDATE transaction_log
-            SET person_id = ?, name = ?, student_no = ?, phone = ?
+            SET enrolment_no = ?, name = ?, remarks = ?, phone = ?
             WHERE id = ?
-        ''', (person_id, name, student_no, phone, transaction_id))
+        ''', (enrolment_no, name, remarks, phone, transaction_id))
         conn.commit()
         if cursor.rowcount == 0:
             return False, "Transaction not found or no changes made."

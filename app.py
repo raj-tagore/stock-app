@@ -35,7 +35,7 @@ class InventoryApp:
 
         self.refresh_stock_view()
         self.refresh_transaction_view()
-        self.populate_book_name_combobox()
+        self.populate_course_code_combobox()
 
 
     # --- Stock Tab ---
@@ -44,13 +44,13 @@ class InventoryApp:
         filter_frame_stock = ttk.LabelFrame(self.stock_tab, text="Filter Stock", padding=10)
         filter_frame_stock.pack(fill="x", padx=10, pady=5)
 
-        ttk.Label(filter_frame_stock, text="Book Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.stock_filter_book_name = ttk.Entry(filter_frame_stock, width=30)
-        self.stock_filter_book_name.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(filter_frame_stock, text="Course Code:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.stock_filter_course_code = ttk.Entry(filter_frame_stock, width=30)
+        self.stock_filter_course_code.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(filter_frame_stock, text="Course Code:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        self.stock_filter_course_code = ttk.Entry(filter_frame_stock, width=20)
-        self.stock_filter_course_code.grid(row=0, column=3, padx=5, pady=5)
+        ttk.Label(filter_frame_stock, text="Title:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.stock_filter_title = ttk.Entry(filter_frame_stock, width=20)
+        self.stock_filter_title.grid(row=0, column=3, padx=5, pady=5)
         
         ttk.Label(filter_frame_stock, text="Language:").grid(row=0, column=4, padx=5, pady=5, sticky="w")
         self.stock_filter_language = ttk.Entry(filter_frame_stock, width=15)
@@ -63,16 +63,16 @@ class InventoryApp:
         tree_frame_stock = ttk.Frame(self.stock_tab)
         tree_frame_stock.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.stock_tree = ttk.Treeview(tree_frame_stock, columns=("ID", "Book Name", "Course Code", "Language", "Quantity"), show="headings")
+        self.stock_tree = ttk.Treeview(tree_frame_stock, columns=("ID", "Course Code", "Title", "Language", "Quantity"), show="headings")
         self.stock_tree.heading("ID", text="ID")
-        self.stock_tree.heading("Book Name", text="Book Name")
         self.stock_tree.heading("Course Code", text="Course Code")
+        self.stock_tree.heading("Title", text="Title")
         self.stock_tree.heading("Language", text="Language")
         self.stock_tree.heading("Quantity", text="Quantity")
 
         self.stock_tree.column("ID", width=50, anchor="center")
-        self.stock_tree.column("Book Name", width=250)
-        self.stock_tree.column("Course Code", width=150)
+        self.stock_tree.column("Course Code", width=250)
+        self.stock_tree.column("Title", width=150)
         self.stock_tree.column("Language", width=100)
         self.stock_tree.column("Quantity", width=80, anchor="center")
 
@@ -86,13 +86,13 @@ class InventoryApp:
         form_frame_stock = ttk.LabelFrame(self.stock_tab, text="Manage Stock Item", padding=10)
         form_frame_stock.pack(fill="x", padx=10, pady=10)
 
-        ttk.Label(form_frame_stock, text="Book Name:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
-        self.stock_book_name_entry = ttk.Entry(form_frame_stock, width=40)
-        self.stock_book_name_entry.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
-
-        ttk.Label(form_frame_stock, text="Course Code:").grid(row=1, column=0, padx=5, pady=2, sticky="w")
+        ttk.Label(form_frame_stock, text="Course Code:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
         self.stock_course_code_entry = ttk.Entry(form_frame_stock, width=40)
-        self.stock_course_code_entry.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
+        self.stock_course_code_entry.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+
+        ttk.Label(form_frame_stock, text="Title:").grid(row=1, column=0, padx=5, pady=2, sticky="w")
+        self.stock_title_entry = ttk.Entry(form_frame_stock, width=40)
+        self.stock_title_entry.grid(row=1, column=1, padx=5, pady=2, sticky="ew")
 
         ttk.Label(form_frame_stock, text="Language:").grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.stock_language_entry = ttk.Entry(form_frame_stock, width=25)
@@ -117,15 +117,15 @@ class InventoryApp:
         ttk.Button(button_frame_stock, text="Refresh View", command=self.refresh_stock_view).pack(side="right", padx=5)
 
     def clear_stock_filters_and_refresh(self):
-        self.stock_filter_book_name.delete(0, tk.END)
         self.stock_filter_course_code.delete(0, tk.END)
+        self.stock_filter_title.delete(0, tk.END)
         self.stock_filter_language.delete(0, tk.END)
         self.refresh_stock_view()
 
     def filter_stock_view(self):
         filters = {
-            "book_name": self.stock_filter_book_name.get(),
             "course_code": self.stock_filter_course_code.get(),
+            "title": self.stock_filter_title.get(),
             "language": self.stock_filter_language.get()
         }
         self.refresh_stock_view(filters=filters)
@@ -141,18 +141,18 @@ class InventoryApp:
         values = item['values']
         
         self.selected_stock_id = values[0]
-        self.stock_book_name_entry.delete(0, tk.END)
-        self.stock_book_name_entry.insert(0, values[1])
         self.stock_course_code_entry.delete(0, tk.END)
-        self.stock_course_code_entry.insert(0, values[2])
+        self.stock_course_code_entry.insert(0, values[1])
+        self.stock_title_entry.delete(0, tk.END)
+        self.stock_title_entry.insert(0, values[2])
         self.stock_language_entry.delete(0, tk.END)
         self.stock_language_entry.insert(0, values[3])
         self.stock_quantity_entry.delete(0, tk.END)
         self.stock_quantity_entry.insert(0, values[4])
 
     def clear_stock_form(self, clear_selection=True):
-        self.stock_book_name_entry.delete(0, tk.END)
         self.stock_course_code_entry.delete(0, tk.END)
+        self.stock_title_entry.delete(0, tk.END)
         self.stock_language_entry.delete(0, tk.END)
         self.stock_quantity_entry.delete(0, tk.END)
         if clear_selection:
@@ -168,16 +168,16 @@ class InventoryApp:
         stock_data = db.get_all_stock(filters=filters)
         for row in stock_data:
             self.stock_tree.insert("", "end", values=row)
-        self.populate_book_name_combobox() # Update combobox in transaction tab
+        self.populate_course_code_combobox() # Update combobox in transaction tab
 
     def add_stock_item(self):
-        book_name = self.stock_book_name_entry.get()
         course_code = self.stock_course_code_entry.get()
+        title = self.stock_title_entry.get()
         language = self.stock_language_entry.get()
         quantity_str = self.stock_quantity_entry.get()
 
-        if not book_name or not quantity_str:
-            messagebox.showerror("Input Error", "Book Name and Quantity are required.")
+        if not course_code or not quantity_str:
+            messagebox.showerror("Input Error", "Course Code and Quantity are required.")
             return
         try:
             quantity = int(quantity_str)
@@ -188,7 +188,7 @@ class InventoryApp:
             messagebox.showerror("Input Error", "Quantity must be a valid integer.")
             return
 
-        success, message = db.add_stock(book_name, course_code, language, quantity)
+        success, message = db.add_stock(course_code, title, language, quantity)
         if success:
             messagebox.showinfo("Success", message)
             self.refresh_stock_view()
@@ -201,13 +201,13 @@ class InventoryApp:
             messagebox.showwarning("Selection Error", "Please select a stock item to update.")
             return
 
-        book_name = self.stock_book_name_entry.get()
         course_code = self.stock_course_code_entry.get()
+        title = self.stock_title_entry.get()
         language = self.stock_language_entry.get()
         quantity_str = self.stock_quantity_entry.get()
 
-        if not book_name or not quantity_str:
-            messagebox.showerror("Input Error", "Book Name and Quantity are required.")
+        if not course_code or not quantity_str:
+            messagebox.showerror("Input Error", "Course Code and Quantity are required.")
             return
         try:
             quantity = int(quantity_str)
@@ -218,7 +218,7 @@ class InventoryApp:
             messagebox.showerror("Input Error", "Quantity must be a valid integer.")
             return
         
-        success, message = db.update_stock(self.selected_stock_id, book_name, course_code, language, quantity)
+        success, message = db.update_stock(self.selected_stock_id, course_code, title, language, quantity)
         if success:
             messagebox.showinfo("Success", message)
             self.refresh_stock_view()
@@ -246,13 +246,13 @@ class InventoryApp:
         filter_frame_trans = ttk.LabelFrame(self.transactions_tab, text="Filter Transactions", padding=10)
         filter_frame_trans.pack(fill="x", padx=10, pady=5)
 
-        ttk.Label(filter_frame_trans, text="Book Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.trans_filter_book_name = ttk.Entry(filter_frame_trans, width=20)
-        self.trans_filter_book_name.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(filter_frame_trans, text="Course Code:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.trans_filter_course_code = ttk.Entry(filter_frame_trans, width=20)
+        self.trans_filter_course_code.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(filter_frame_trans, text="Person ID:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        self.trans_filter_person_id = ttk.Entry(filter_frame_trans, width=15)
-        self.trans_filter_person_id.grid(row=0, column=3, padx=5, pady=5)
+        ttk.Label(filter_frame_trans, text="Enrolment No:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.trans_filter_enrolment_no = ttk.Entry(filter_frame_trans, width=15)
+        self.trans_filter_enrolment_no.grid(row=0, column=3, padx=5, pady=5)
 
         ttk.Label(filter_frame_trans, text="Action (in/out):").grid(row=0, column=4, padx=5, pady=5, sticky="w")
         self.trans_filter_action = ttk.Combobox(filter_frame_trans, values=["", "in", "out"], width=8, state="readonly")
@@ -266,25 +266,25 @@ class InventoryApp:
         tree_frame_trans = ttk.Frame(self.transactions_tab)
         tree_frame_trans.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.trans_tree = ttk.Treeview(tree_frame_trans, columns=("ID", "Book Name", "Person ID", "Action", "Qty", "Datetime", "Name", "Student No", "Phone"), show="headings")
+        self.trans_tree = ttk.Treeview(tree_frame_trans, columns=("ID", "Course Code", "Enrolment No", "Action", "Qty", "Datetime", "Name", "Remarks", "Phone"), show="headings")
         self.trans_tree.heading("ID", text="Trans ID")
-        self.trans_tree.heading("Book Name", text="Book Name")
-        self.trans_tree.heading("Person ID", text="Person ID")
+        self.trans_tree.heading("Course Code", text="Course Code")
+        self.trans_tree.heading("Enrolment No", text="Enrolment No")
         self.trans_tree.heading("Action", text="Action")
         self.trans_tree.heading("Qty", text="Quantity")
         self.trans_tree.heading("Datetime", text="Timestamp")
         self.trans_tree.heading("Name", text="Contact Name")
-        self.trans_tree.heading("Student No", text="Student No.")
+        self.trans_tree.heading("Remarks", text="Remarks.")
         self.trans_tree.heading("Phone", text="Phone")
 
         self.trans_tree.column("ID", width=60, anchor="center")
-        self.trans_tree.column("Book Name", width=180)
-        self.trans_tree.column("Person ID", width=80)
+        self.trans_tree.column("Course Code", width=180)
+        self.trans_tree.column("Enrolment No", width=80)
         self.trans_tree.column("Action", width=60, anchor="center")
         self.trans_tree.column("Qty", width=60, anchor="center")
         self.trans_tree.column("Datetime", width=140)
         self.trans_tree.column("Name", width=120)
-        self.trans_tree.column("Student No", width=100)
+        self.trans_tree.column("Remarks", width=100)
         self.trans_tree.column("Phone", width=100)
         
         trans_scrollbar = ttk.Scrollbar(tree_frame_trans, orient="vertical", command=self.trans_tree.yview)
@@ -297,9 +297,9 @@ class InventoryApp:
         form_frame_trans = ttk.LabelFrame(self.transactions_tab, text="Manage Transaction", padding=10)
         form_frame_trans.pack(fill="x", padx=10, pady=10)
 
-        ttk.Label(form_frame_trans, text="Book Name:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
-        self.trans_book_name_combo = ttk.Combobox(form_frame_trans, width=38, state="readonly")
-        self.trans_book_name_combo.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
+        ttk.Label(form_frame_trans, text="Course Code:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
+        self.trans_course_code_combo = ttk.Combobox(form_frame_trans, width=38, state="readonly")
+        self.trans_course_code_combo.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
 
         ttk.Label(form_frame_trans, text="Action:").grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.trans_action_combo = ttk.Combobox(form_frame_trans, values=["in", "out"], width=10, state="readonly")
@@ -310,17 +310,17 @@ class InventoryApp:
         self.trans_quantity_entry = ttk.Entry(form_frame_trans, width=10)
         self.trans_quantity_entry.grid(row=1, column=1, padx=5, pady=2, sticky="w")
 
-        ttk.Label(form_frame_trans, text="Person ID:").grid(row=1, column=2, padx=5, pady=2, sticky="w")
-        self.trans_person_id_entry = ttk.Entry(form_frame_trans, width=25)
-        self.trans_person_id_entry.grid(row=1, column=3, padx=5, pady=2, sticky="ew")
+        ttk.Label(form_frame_trans, text="Enrolment No:").grid(row=1, column=2, padx=5, pady=2, sticky="w")
+        self.trans_enrolment_no_entry = ttk.Entry(form_frame_trans, width=25)
+        self.trans_enrolment_no_entry.grid(row=1, column=3, padx=5, pady=2, sticky="ew")
         
         ttk.Label(form_frame_trans, text="Contact Name:").grid(row=2, column=0, padx=5, pady=2, sticky="w")
         self.trans_name_entry = ttk.Entry(form_frame_trans, width=40)
         self.trans_name_entry.grid(row=2, column=1, padx=5, pady=2, sticky="ew")
 
-        ttk.Label(form_frame_trans, text="Student No:").grid(row=2, column=2, padx=5, pady=2, sticky="w")
-        self.trans_student_no_entry = ttk.Entry(form_frame_trans, width=25)
-        self.trans_student_no_entry.grid(row=2, column=3, padx=5, pady=2, sticky="ew")
+        ttk.Label(form_frame_trans, text="Remarks:").grid(row=2, column=2, padx=5, pady=2, sticky="w")
+        self.trans_remarks_entry = ttk.Entry(form_frame_trans, width=25)
+        self.trans_remarks_entry.grid(row=2, column=3, padx=5, pady=2, sticky="ew")
 
         ttk.Label(form_frame_trans, text="Phone:").grid(row=3, column=0, padx=5, pady=2, sticky="w")
         self.trans_phone_entry = ttk.Entry(form_frame_trans, width=40)
@@ -340,28 +340,28 @@ class InventoryApp:
         ttk.Button(button_frame_trans, text="Refresh View", command=self.refresh_transaction_view).pack(side="right", padx=5)
 
     def clear_transaction_filters_and_refresh(self):
-        self.trans_filter_book_name.delete(0, tk.END)
-        self.trans_filter_person_id.delete(0, tk.END)
+        self.trans_filter_course_code.delete(0, tk.END)
+        self.trans_filter_enrolment_no.delete(0, tk.END)
         self.trans_filter_action.set("")
         self.refresh_transaction_view()
 
     def filter_transaction_view(self):
         filters = {
-            "book_name": self.trans_filter_book_name.get(),
-            "person_id": self.trans_filter_person_id.get(),
+            "course_code": self.trans_filter_course_code.get(),
+            "enrolment_no": self.trans_filter_enrolment_no.get(),
             "action": self.trans_filter_action.get()
-            # Add more filters here if needed, e.g., name, student_no
+            # Add more filters here if needed, e.g., name, remarks
         }
         self.refresh_transaction_view(filters=filters)
 
-    def populate_book_name_combobox(self):
+    def populate_course_code_combobox(self):
         stock_items = db.get_all_stock()
-        book_names = [item[1] for item in stock_items] # item[1] is book_name
-        self.trans_book_name_combo['values'] = book_names
-        if book_names:
-            self.trans_book_name_combo.set(book_names[0]) # Default to first book
+        course_codes = [item[1] for item in stock_items] # item[1] is course_code
+        self.trans_course_code_combo['values'] = course_codes
+        if course_codes:
+            self.trans_course_code_combo.set(course_codes[0]) # Default to first book
         else:
-            self.trans_book_name_combo.set("")
+            self.trans_course_code_combo.set("")
 
 
     def on_transaction_select(self, event=None):
@@ -373,7 +373,7 @@ class InventoryApp:
             return
 
         item = self.trans_tree.item(selected_items[0])
-        values = item['values'] # (Trans ID, Book Name, Person ID, Action, Qty, Datetime, Name, Student No, Phone)
+        values = item['values'] # (Trans ID, Course Code, Enrolment No, Action, Qty, Datetime, Name, Remarks, Phone)
                                 # The get_all_transactions also returns stock_id as the last (hidden) element if needed.
                                 # For now, we fetch transaction by ID to get all details including stock_id for updates.
         
@@ -382,7 +382,7 @@ class InventoryApp:
         # Fetch full transaction data to get stock_id and ensure data consistency
         # The treeview might not have stock_id directly visible or easily accessible for logic
         full_trans_data = db.get_transaction_by_id(self.selected_transaction_id)
-        # full_trans_data: (trans_id, stock_id, book_name, person_id, action, quantity, ...)
+        # full_trans_data: (trans_id, stock_id, course_code, enrolment_no, action, quantity, ...)
         if not full_trans_data:
             messagebox.showerror("Error", "Could not retrieve transaction details.")
             self.clear_transaction_form()
@@ -390,21 +390,21 @@ class InventoryApp:
 
         self.selected_transaction_stock_id = full_trans_data[1] # stock_id
 
-        self.trans_book_name_combo.set(full_trans_data[2]) # Book Name
+        self.trans_course_code_combo.set(full_trans_data[2]) # Course Code
         self.trans_action_combo.set(full_trans_data[4])    # Action
         self.trans_quantity_entry.delete(0, tk.END)
         self.trans_quantity_entry.insert(0, full_trans_data[5]) # Quantity
-        self.trans_person_id_entry.delete(0, tk.END)
-        self.trans_person_id_entry.insert(0, full_trans_data[3]) # Person ID
+        self.trans_enrolment_no_entry.delete(0, tk.END)
+        self.trans_enrolment_no_entry.insert(0, full_trans_data[3]) # Enrolment No
         self.trans_name_entry.delete(0, tk.END)
         self.trans_name_entry.insert(0, full_trans_data[7]) # Name
-        self.trans_student_no_entry.delete(0, tk.END)
-        self.trans_student_no_entry.insert(0, full_trans_data[8]) # Student No
+        self.trans_remarks_entry.delete(0, tk.END)
+        self.trans_remarks_entry.insert(0, full_trans_data[8]) # Remarks
         self.trans_phone_entry.delete(0, tk.END)
         self.trans_phone_entry.insert(0, full_trans_data[9]) # Phone
 
         # Disable fields not updatable via "Update Details"
-        self.trans_book_name_combo.config(state="disabled")
+        self.trans_course_code_combo.config(state="disabled")
         self.trans_action_combo.config(state="disabled")
         self.trans_quantity_entry.config(state="disabled")
 
@@ -417,16 +417,16 @@ class InventoryApp:
                 self.trans_tree.selection_remove(self.trans_tree.selection()[0])
         
         # Re-enable fields that might have been disabled by on_transaction_select
-        self.trans_book_name_combo.config(state="readonly") # Or "normal" if typing is allowed
-        self.populate_book_name_combobox() # Repopulate and set default
+        self.trans_course_code_combo.config(state="readonly") # Or "normal" if typing is allowed
+        self.populate_course_code_combobox() # Repopulate and set default
         self.trans_action_combo.config(state="readonly")
         self.trans_action_combo.set("out")
         self.trans_quantity_entry.config(state="normal")
 
         self.trans_quantity_entry.delete(0, tk.END)
-        self.trans_person_id_entry.delete(0, tk.END)
+        self.trans_enrolment_no_entry.delete(0, tk.END)
         self.trans_name_entry.delete(0, tk.END)
-        self.trans_student_no_entry.delete(0, tk.END)
+        self.trans_remarks_entry.delete(0, tk.END)
         self.trans_phone_entry.delete(0, tk.END)
 
 
@@ -441,16 +441,16 @@ class InventoryApp:
         self.clear_transaction_form() # Clear form and selection after refresh
 
     def add_transaction_item(self):
-        book_name_selected = self.trans_book_name_combo.get()
+        course_code_selected = self.trans_course_code_combo.get()
         action = self.trans_action_combo.get()
         quantity_str = self.trans_quantity_entry.get()
-        person_id = self.trans_person_id_entry.get()
+        enrolment_no = self.trans_enrolment_no_entry.get()
         name = self.trans_name_entry.get()
-        student_no = self.trans_student_no_entry.get()
+        remarks = self.trans_remarks_entry.get()
         phone = self.trans_phone_entry.get()
 
-        if not book_name_selected or not action or not quantity_str:
-            messagebox.showerror("Input Error", "Book Name, Action, and Quantity are required.")
+        if not course_code_selected or not action or not quantity_str:
+            messagebox.showerror("Input Error", "Course Code, Action, and Quantity are required.")
             return
         
         try:
@@ -462,13 +462,13 @@ class InventoryApp:
             messagebox.showerror("Input Error", "Quantity must be a valid integer.")
             return
 
-        stock_item = db.get_stock_by_name(book_name_selected)
+        stock_item = db.get_stock_by_name(course_code_selected)
         if not stock_item:
-            messagebox.showerror("Input Error", f"Stock item '{book_name_selected}' not found.")
+            messagebox.showerror("Input Error", f"Stock item '{course_code_selected}' not found.")
             return
         stock_id = stock_item[0]
 
-        success, message = db.add_transaction(stock_id, person_id, action, quantity, name, student_no, phone)
+        success, message = db.add_transaction(stock_id, enrolment_no, action, quantity, name, remarks, phone)
         if success:
             messagebox.showinfo("Success", message)
             self.refresh_transaction_view()
@@ -483,15 +483,15 @@ class InventoryApp:
             return
 
         # Only these fields are updatable via this function
-        person_id = self.trans_person_id_entry.get()
+        enrolment_no = self.trans_enrolment_no_entry.get()
         name = self.trans_name_entry.get()
-        student_no = self.trans_student_no_entry.get()
+        remarks = self.trans_remarks_entry.get()
         phone = self.trans_phone_entry.get()
 
         # Note: Book, Action, Quantity are not updated here to keep stock logic simple.
         # User should delete and re-add if those need to change.
         
-        success, message = db.update_transaction_details(self.selected_transaction_id, person_id, name, student_no, phone)
+        success, message = db.update_transaction_details(self.selected_transaction_id, enrolment_no, name, remarks, phone)
         if success:
             messagebox.showinfo("Success", message)
             self.refresh_transaction_view()
